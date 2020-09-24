@@ -5,12 +5,13 @@ const screenWidth = Dimensions.get('window').width;
 // const db = firebase.firestore();
 export default function Post({ route, navigation }) {
     const [areaText, setAreaText] = useState('');
+    const emailAddress = route.params.emailAddress;
     useEffect(() => {
         navigation.setOptions({
             headerLeft: () => (
                 <TouchableOpacity
                     onPress={() => {
-                        navigation.navigate('ListPost')
+                        navigation.navigate('ListPost', { emailAddress: emailAddress })
                     }}
                 >
                     <Text style={{ fontSize: 20, marginLeft: 10 }}>Cancel</Text>
@@ -35,7 +36,8 @@ export default function Post({ route, navigation }) {
             content: areaText,
             time: Date.parse(time),
             dateTime: convert(),
-            user: route.params.emailAddress
+            user: emailAddress,
+            likes: []
         })
             .then(function (docRef) {
                 Alert.alert("Thêm thành công")

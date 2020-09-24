@@ -4,8 +4,9 @@ import * as firebase from 'firebase'
 
 const db = firebase.firestore();
 const screenWidth = Dimensions.get('window').width;
-export default function ListPost({ navigation }) {
-
+export default function ListPost({ route, navigation }) {
+    const emailAddress = route.params.emailAddress;
+    console.log(emailAddress + "list post")
     useEffect(() => {
         navigation.setOptions({
             headerLeft: () => (
@@ -36,7 +37,7 @@ export default function ListPost({ navigation }) {
             const fakeData = []
             const fakeDataFollowers = []
 
-            await db.collection("poster").get().then((querySnapshot) => {
+            await db.collection("poster").where("user", "==", emailAddress).get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     fakeData.push({ id: doc.id, content: doc.data().content, time: doc.data().time, dateTime: doc.data().dateTime })
                 });

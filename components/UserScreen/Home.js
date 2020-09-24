@@ -1,72 +1,86 @@
-import React, { useState, useEffect } from 'react'
-import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity, FlatList } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
+import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity, FlatList, Alert,TextInput } from 'react-native'
 import * as firebase from 'firebase'
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, FontAwesome5 } from '@expo/vector-icons';
+import Modal from 'react-native-modal';
 
-const db = firebase.firestore();
 const widthScreen = Dimensions.get('window').width;
+export default function Home({ route }) {
+    const userName = route.params.user
+    const [isModalVisible, setModalVisible] = useState(false);
+    const toggleModal = () => {
+        setModalVisible(!isModalVisible);
 
-const fakeData = [
-    {
-        id: "1",
-        user: 'Nam dep troai',
-        dateTime: ' 22-12-2012',
-        content: "nam ngnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsu ngocs",
-        totalLike: 100,
-        totalComment: 10
-
-    },
-    {
-        id: "5",
-        user: 'Nam dep troai',
-        dateTime: ' 22-12-2012',
-        content: "nam ngnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsu ngocs",
-        totalLike: 100,
-        totalComment: 10
-
-    },
-    {
-        id: "6",
-        user: 'Nam dep troai',
-        dateTime: ' 22-12-2012',
-        content: "nam ngnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsnam ngu ngocsu ngocs",
-        totalLike: 100,
-        totalComment: 10
-
-    },
-    {
-        id: "7",
-        user: 'Nam xau trai',
-        dateTime: ' 22-10-2020',
-        content: "Toi la sinh vien",
-        totalLike: 95,
-        totalComment: 56
-
-    },
-    {
-        id: "3",
-        user: 'Viet nam',
-        dateTime: ' 12-12-2019',
-        content: "youtube.com",
-        totalLike: 23,
-        totalComment: 11
-
-    },
-]
-export default function Home() {
+    };
     const renderItem = ({ item }) => {
         return ((
-            <Item user={item.user} dateTime={item.dateTime} content={item.content} totalLike={item.totalLike} totalComment={item.totalComment} />
+            <Item likes={item.likes} user={item.user} dateTime={item.dateTime} content={item.content} totalLike={item.totalLike} totalComment={item.totalComment} />
         ))
     };
-    const [data, setData] = useState([])
+    const Item = ({ likes, user, dateTime, content, totalLike, totalComment }) => {
+        const [allLike, setAllLike] = useState(likes.length);
+        let color = 'black'
+        if (likes.length > 0) {
+            likes.map(item => {
+                if (item == userName) {
+                    color = 'red'
+                }
+            })
+        }
+        function getlRealLike(params) {
+            if (params == 'red') {
+                setAllLike(allLike - 1)
+            } else {
+                setAllLike(allLike + 1)
+            }
+        }
 
+        return (
+            (
+                <View style={styles.item}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold' }} >{user}</Text>
+                    <Text style={{ fontWeight: '100' }} >{dateTime}</Text>
+                    <Text style={{ marginTop: 20 }} >{content}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, borderBottomWidth: 0.3, paddingBottom: 10, borderBottomColor: 'lightgray' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <AntDesign name="like1" size={24} color='blue' />
+                            <Text style={{ marginLeft: 5, marginTop: 4 }} >{allLike}</Text>
+                        </View>
+                        <Text style={{ marginTop: 4 }}  >{totalComment + " bình luận"}</Text>
+                    </View>
+                    <View style={styles.interactive}>
+                        <Like onClick={getlRealLike} status={userName} content={content} user={user} color={color} />
+                        <TouchableOpacity onPress={toggleModal} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <FontAwesome5 name="comments" size={24} color='black' />
+                            <Text style={{ marginLeft: 5, marginTop: 4 }} >Comment</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+
+                            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <AntDesign name="sharealt" size={24} color='black' />
+                            <Text style={{ marginLeft: 5, marginTop: 4 }} >Share</Text>
+                        </TouchableOpacity>
+
+                    </View>
+                </View>
+            )
+        )
+    };
+
+    const [data, setData] = useState([])
     useEffect(() => {
+
         const request = async () => {
             let fake = []
+            const db = firebase.firestore();
+
             await db.collection("poster").get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
-                    fake.push({ id: doc.id, content: doc.data().content, time: doc.data().time, dateTime: doc.data().dateTime, user: doc.data().user })
+                    fake.push({
+                        id: doc.id, content: doc.data().content,
+                        time: doc.data().time, dateTime: doc.data().dateTime, user: doc.data().user,
+                        likes: doc.data().likes
+                    })
                 });
             });
             const sort = (data) => {
@@ -76,20 +90,21 @@ export default function Home() {
             }
             sort(fake);
             setData(fake)
+
         }
         request();
     }, [])
     return (
         <View style={styles.container}>
             <View style={styles.social}>
-                <TouchableOpacity onPress={() => { console.log('ahihi') }} style={styles.viewFollow}>
+                <TouchableOpacity style={styles.viewFollow}>
                     <Image
                         style={{ width: 30, height: 30, marginRight: 10 }}
                         source={require('../images/follow.png')}
                     />
                     <Text style={{ fontSize: 20 }}>Follow</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { console.log('bhihi') }} style={styles.viewShare}>
+                <TouchableOpacity style={styles.viewShare}>
                     <Image
                         style={{ width: 30, height: 30, marginRight: 10 }}
                         source={require('../images/share.png')}
@@ -104,28 +119,82 @@ export default function Home() {
                     keyExtractor={item => item.id}
                 />
             </View>
+            <Modal
+                style={{
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}
+                animationIn='slideInUp'
+                coverScreen={true}
+                animationInTiming={2000}
+                backdropOpacity={0.5}
+                onBackdropPress={() => setModalVisible(false)}
+                onSwipeComplete={() => setModalVisible(false)}
+                onBackButtonPress={() => {
+                    setModalVisible(false)
+                }}
+                isVisible={isModalVisible}>
+
+                <Text>Ahihi</Text>
+            </Modal>
         </View>
     )
-}
-const Item = ({ user, dateTime, content, totalLike, totalComment }) => {
 
+}
+
+
+const Like = (props) => {
+    const { content, user, color, onClick } = props
+    const [state, setState] = useState(color)
+    function _pressLike() {
+        const db = firebase.firestore();
+        if (state == 'black') {
+            db.collection("poster").where("content", "==", content).where("user", "==", user)
+                .get()
+                .then(function (querySnapshot) {
+                    querySnapshot.forEach(function (doc) {
+                        // doc.data() is never undefined for query doc snapshots
+
+                        db.collection("poster").doc(doc.id).update({
+                            likes: firebase.firestore.FieldValue.arrayUnion(props.status)
+                        })
+                    });
+                })
+                .catch(function (error) {
+                    console.error("Error adding document: ", error);
+                });
+            setState('red')
+            onClick('black')
+
+        } else {
+            db.collection("poster").where("content", "==", content).where("user", "==", user)
+                .get()
+                .then(function (querySnapshot) {
+                    querySnapshot.forEach(function (doc) {
+                        // doc.data() is never undefined for query doc snapshots
+
+                        db.collection("poster").doc(doc.id).update({
+                            likes: firebase.firestore.FieldValue.arrayRemove(props.status)
+                        })
+                    });
+                })
+                .catch(function (error) {
+                    console.error("Error adding document: ", error);
+                });
+            setState('black')
+            onClick('red')
+        }
+    }
     return (
-        (
-            <View style={styles.item}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold' }} >{user}</Text>
-                <Text style={{ fontWeight: '100' }} >{dateTime}</Text>
-                <Text >{content}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                        <AntDesign name="like1" size={24} color="blue" />
-                        <Text style={{ marginLeft: 5, marginTop: 4 }} >{totalLike}</Text>
-                    </View>
-                    <Text style={{ marginTop: 4 }}  >{totalComment + " bình luận"}</Text>
-                </View>
-            </View>
-        )
+        <TouchableOpacity
+            onPress={_pressLike}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <AntDesign name="like2" size={24} color={state} />
+
+            <Text style={{ marginLeft: 5, marginTop: 4, color: state }} >Like</Text>
+        </TouchableOpacity>
     )
-};
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -149,5 +218,11 @@ const styles = StyleSheet.create({
         borderTopColor: 'pink',
         paddingHorizontal: 10
 
+    },
+    interactive: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        paddingVertical: 7
     }
 })

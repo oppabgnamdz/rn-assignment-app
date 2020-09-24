@@ -47,7 +47,10 @@ export default function Login({ navigation }) {
             if (check.length == 0) {
                 firebase.auth().signInWithEmailAndPassword(emailAddress, password).
                     then(() => {
-                        navigation.navigate(UserScreen)
+                        navigation.navigate('UserScreen', {
+                            emailAddress: emailAddress,
+                            password: password
+                        })
                     })
 
                     .catch(function (error) {

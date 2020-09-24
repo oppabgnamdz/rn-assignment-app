@@ -6,7 +6,7 @@ import Settings from './Settings'
 import { Ionicons } from '@expo/vector-icons';
 const Tab = createBottomTabNavigator();
 
-export default function UserScreen() {
+export default function UserScreen({ route }) {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -40,7 +40,7 @@ export default function UserScreen() {
 
             }}
         >
-            <Tab.Screen name="Home" component={Home} />
+            <Tab.Screen initialParams={{ user: route.params.emailAddress }} name="Home" component={Home} />
             <Tab.Screen name="Settings" component={Settings} />
         </Tab.Navigator>
     )
