@@ -4,6 +4,7 @@ import Modal from 'react-native-modal';
 import * as firebase from 'firebase'
 import * as Facebook from 'expo-facebook';
 import Post from './Post'
+import UserScreen from './UserScreen/UserScreen'
 
 export default function Login({ navigation }) {
     var provider = new firebase.auth.FacebookAuthProvider();
@@ -24,23 +25,45 @@ export default function Login({ navigation }) {
         setPassword(e)
     }
     const _signIn = () => {
-        firebase.auth().signInWithEmailAndPassword(emailAddress, password).
-            then(() => {
-                navigation.navigate(Post)
-            })
+        const db = firebase.firestore()
+        const check = [];
+        const loginAdmin = async () => {
+            await db.collection("AdminUsers").where("UserName", "==", emailAddress).where("Password", "==", password)
+                .get()
+                .then(function (querySnapshot) {
+                    querySnapshot.forEach(function (doc) {
+                        // doc.data() is never undefined for query doc snapshotsßß
+                        navigation.navigate('Post', {
+                            emailAddress: emailAddress,
+                            password: password
+                        })
+                        check.push({ id: doc.id, data: doc.data() })
+                    });
+                })
+                .catch(function (error) {
+                    console.log("Error getting documents: ", error);
 
-            .catch(function (error) {
-                Alert.alert('Thông tin đăng nhập không đúng')
-            });
+                });
+            if (check.length == 0) {
+                firebase.auth().signInWithEmailAndPassword(emailAddress, password).
+                    then(() => {
+                        navigation.navigate(UserScreen)
+                    })
+
+                    .catch(function (error) {
+                        Alert.alert('Thông tin đăng nhập không đúng')
+                    });
+            }
+        }
+        loginAdmin();
+
 
 
     }
     const modalSignUp = () => {
         if (emailAddress.includes('@') && password.length >= 6) {
-            console.log('signup su')
             firebase.auth().createUserWithEmailAndPassword(emailAddress, password)
                 .then(() => {
-                    console.log('login succesfully')
                     Alert.alert('Đăng ký thành công')
                     toggleModal();
                     setEmailAddress('')
@@ -73,7 +96,7 @@ export default function Login({ navigation }) {
     const signInFacebook = () => {
         async function logIn() {
             try {
-                await Facebook.initializeAsync('348594869837335');
+                await Facebook.initializeAsync({ appId: '348594869837335' });
                 const {
                     type,
                     token,
@@ -87,7 +110,7 @@ export default function Login({ navigation }) {
                     // Get the user's name using Facebook's Graph API
                     const response = await fetch(`https://graph.facebook.com/me?access_token=${token}`);
                     // Alert.alert('Logged in!', `Hi ${(await response.json()).name}!`);
-                    navigation.navigate(Post)
+                    navigation.navigate(UserScreen)
                 } else {
                     // type === 'cancel'
                 }

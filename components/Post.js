@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TextInput, Platform, Dimensions, Keyboard, Touc
 import * as firebase from 'firebase'
 const screenWidth = Dimensions.get('window').width;
 // const db = firebase.firestore();
-export default function Post({ navigation }) {
+export default function Post({ route, navigation }) {
     const [areaText, setAreaText] = useState('');
     useEffect(() => {
         navigation.setOptions({
@@ -20,18 +20,24 @@ export default function Post({ navigation }) {
 
     }, [])
     const areaContent = (e) => {
-        console.log(e)
         setAreaText(e)
     }
     const confirm = () => {
         if (areaText.length == 0) return Alert.alert('Nội dung không để trống')
-
+        const time = new Date();
+        function convert() {
+            const date = time.getDate().toString() + "/" + time.getMonth().toString() + "/" + time.getFullYear() + " " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds()
+            return date
+        }
+        console.log(time.toString())
         const db = firebase.firestore()
         db.collection("poster").add({
-            content: areaText
+            content: areaText,
+            time: Date.parse(time),
+            dateTime: convert(),
+            user: route.params.emailAddress
         })
             .then(function (docRef) {
-                console.log("Document written with ID: ", docRef.id);
                 Alert.alert("Thêm thành công")
             })
             .catch(function (error) {

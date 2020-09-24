@@ -9,6 +9,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import ListPost from './components/ListPost'
+import Home from './components/UserScreen/Home'
+import UserScreen from './components/UserScreen/UserScreen'
 FirebaseConfig
 const Stack = createStackNavigator();
 export default function App() {
@@ -17,9 +19,10 @@ export default function App() {
 
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Login" component={Login} options={{ title: 'Đăng nhập' }} />
-        <Stack.Screen name="Post" component={Post} options={{ title: '', headerLeft: () => { } }} />
-        <Stack.Screen name="ListPost" component={ListPost} options={{ title: 'DashBoard', headerLeft: () => { } }} />
+        <Stack.Screen name="Login" component={Login} options={{ title: 'Đăng nhập', gestureEnabled: false }} />
+        <Stack.Screen name="Post" component={Post} options={{ title: '', gestureEnabled: false, headerLeft: () => { } }} />
+        <Stack.Screen name="ListPost" component={ListPost} options={{ title: 'DashBoard', gestureEnabled: false }} />
+        <Stack.Screen name="UserScreen" component={UserScreen} options={{ title: 'UserScreen', gestureEnabled: false, headerLeft: () => { } }} />
       </Stack.Navigator>
 
     </NavigationContainer>
