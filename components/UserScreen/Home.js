@@ -1,23 +1,67 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity, FlatList, Alert,TextInput } from 'react-native'
+import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity, FlatList, Alert, TextInput, Keyboard, KeyboardAvoidingView } from 'react-native'
 import * as firebase from 'firebase'
-import { AntDesign, FontAwesome5 } from '@expo/vector-icons';
+import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 
 const widthScreen = Dimensions.get('window').width;
 export default function Home({ route }) {
     const userName = route.params.user
     const [isModalVisible, setModalVisible] = useState(false);
-    const toggleModal = () => {
-        setModalVisible(!isModalVisible);
+    const [contentPost, setContentPost] = useState('')
+    const [userPost, setUserPost] = useState('')
+    const [inputComment, setInputComment] = useState('')
+    const [dataComments, setDataComments] = useState([])
+    console.log(isModalVisible);
+    const toggleModal = (content, user, c) => {
+        const sync = async () => {
+            const db = firebase.firestore();
+            await db.collection("poster").where("content", "==", content).where("user", "==", user)
+                .get()
+                .then(function (querySnapshot) {
+                    querySnapshot.forEach(function (doc) {
+                        // doc.data() is never undefined for query doc snapshots
+                        const cloneData = doc.data().comments
+                        setDataComments(cloneData);
+
+                    });
+                })
+                .catch(function (error) {
+                    console.error("Error adding document: ", error);
+                });
+            setContentPost(content)
+            setUserPost(user)
+            if (c == 2) return
+            setModalVisible(!isModalVisible);
+
+        }
+        sync();
+
 
     };
+    const renderComments = ({ item }) => {
+        return ((
+            <ItemComment comments={item.text} UserComment={item.UserComment} />
+        ))
+    }
+    const ItemComment = ({ comments, UserComment }) => {
+        let name = UserComment
+        if (UserComment.indexOf("@") !== -1) {
+            name = UserComment.substring(0, UserComment.indexOf("@"))
+        }
+        return (
+            <View style={{ flex: 1, width: widthScreen * 0.87, marginLeft: 5, justifyContent: 'center', borderRadius: 7, padding: 10, backgroundColor: 'lightgray', borderColor: 'red', marginBottom: 20, borderWidth: 1 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{name}</Text>
+                <Text>{comments}</Text>
+            </View>
+        )
+    }
     const renderItem = ({ item }) => {
         return ((
-            <Item likes={item.likes} user={item.user} dateTime={item.dateTime} content={item.content} totalLike={item.totalLike} totalComment={item.totalComment} />
+            <Item comments={item.comments} likes={item.likes} user={item.user} dateTime={item.dateTime} content={item.content} />
         ))
     };
-    const Item = ({ likes, user, dateTime, content, totalLike, totalComment }) => {
+    const Item = ({ likes, user, dateTime, content, comments }) => {
         const [allLike, setAllLike] = useState(likes.length);
         let color = 'black'
         if (likes.length > 0) {
@@ -27,7 +71,7 @@ export default function Home({ route }) {
                 }
             })
         }
-        function getlRealLike(params) {
+        const getlRealLike = (params) => {
             if (params == 'red') {
                 setAllLike(allLike - 1)
             } else {
@@ -46,11 +90,11 @@ export default function Home({ route }) {
                             <AntDesign name="like1" size={24} color='blue' />
                             <Text style={{ marginLeft: 5, marginTop: 4 }} >{allLike}</Text>
                         </View>
-                        <Text style={{ marginTop: 4 }}  >{totalComment + " bình luận"}</Text>
+                        <Text style={{ marginTop: 4 }}  >{comments.length + " bình luận"}</Text>
                     </View>
                     <View style={styles.interactive}>
                         <Like onClick={getlRealLike} status={userName} content={content} user={user} color={color} />
-                        <TouchableOpacity onPress={toggleModal} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                        <TouchableOpacity onPress={() => toggleModal(content, user)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                             <FontAwesome5 name="comments" size={24} color='black' />
                             <Text style={{ marginLeft: 5, marginTop: 4 }} >Comment</Text>
                         </TouchableOpacity>
@@ -69,7 +113,6 @@ export default function Home({ route }) {
 
     const [data, setData] = useState([])
     useEffect(() => {
-
         const request = async () => {
             let fake = []
             const db = firebase.firestore();
@@ -79,7 +122,7 @@ export default function Home({ route }) {
                     fake.push({
                         id: doc.id, content: doc.data().content,
                         time: doc.data().time, dateTime: doc.data().dateTime, user: doc.data().user,
-                        likes: doc.data().likes
+                        likes: doc.data().likes, comments: doc.data().comments
                     })
                 });
             });
@@ -93,7 +136,7 @@ export default function Home({ route }) {
 
         }
         request();
-    }, [])
+    }, [isModalVisible])
     return (
         <View style={styles.container}>
             <View style={styles.social}>
@@ -126,7 +169,7 @@ export default function Home({ route }) {
                 }}
                 animationIn='slideInUp'
                 coverScreen={true}
-                animationInTiming={2000}
+                animationInTiming={1000}
                 backdropOpacity={0.5}
                 onBackdropPress={() => setModalVisible(false)}
                 onSwipeComplete={() => setModalVisible(false)}
@@ -134,10 +177,58 @@ export default function Home({ route }) {
                     setModalVisible(false)
                 }}
                 isVisible={isModalVisible}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS == "ios" ? "padding" : "height"}
+                    style={{
+                        width: widthScreen * 0.9, backgroundColor: 'lightblue', borderRadius: 15,
+                        justifyContent: 'space-between', flexDirection: 'column', alignItems: 'flex-start',
+                        height: "80%"
+                    }}
+                >
+                    <View style={{ backgroundColor: 'lightblue', flex: 0.93, justifyContent: 'center', alignItems: 'center' }}>
+                        <FlatList
+                            data={dataComments}
+                            renderItem={renderComments}
+                            keyExtractor={item => item.text}
 
-                <Text>Ahihi</Text>
+                        />
+                    </View>
+                    <View style={{ borderWidth: 2, backgroundColor: 'white', flex: 0.07, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
+                        <TextInput
+                            onChangeText={(e) => {
+                                setInputComment(e)
+                            }}
+                            placeholderTextColor='red'
+                            placeholder="Viết bình luận"
+                            style={styles.textInput}
+                        />
+                        <Ionicons onPress={() => {
+                            const sync = async () => {
+                                const db = firebase.firestore();
+                                await db.collection("poster").where("content", "==", contentPost).where("user", "==", userPost)
+                                    .get()
+                                    .then(function (querySnapshot) {
+                                        querySnapshot.forEach(function (doc) {
+                                            // doc.data() is never undefined for query doc snapshots
+                                            db.collection("poster").doc(doc.id).update({
+                                                comments: firebase.firestore.FieldValue.arrayUnion({ UserComment: userName, text: inputComment })
+                                            })
+                                        });
+                                    })
+                                    .catch(function (error) {
+                                        console.error("Error adding document: ", error);
+                                    });
+                                toggleModal(contentPost, userPost, 2);
+                            }
+                            sync();
+
+
+                        }} style={{ marginRight: 20 }} name="ios-send" size={24} color="black" />
+                    </View>
+                </KeyboardAvoidingView>
+
             </Modal>
-        </View>
+        </View >
     )
 
 }
@@ -149,6 +240,7 @@ const Like = (props) => {
     function _pressLike() {
         const db = firebase.firestore();
         if (state == 'black') {
+
             db.collection("poster").where("content", "==", content).where("user", "==", user)
                 .get()
                 .then(function (querySnapshot) {
@@ -210,7 +302,7 @@ const styles = StyleSheet.create({
     },
     viewFollow: { flex: 1, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', borderRightWidth: 1, },
     viewShare: { flex: 1, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
-    viewContent: { marginTop: 15, backgroundColor: 'white', width: widthScreen, alignItems: 'center' },
+    viewContent: { marginTop: 15, backgroundColor: 'white', width: widthScreen, alignItems: 'center', marginBottom: 40 },
     item: {
         width: widthScreen * 0.95,
         marginTop: 10,
@@ -224,5 +316,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-around',
         paddingVertical: 7
-    }
+    },
+    textInput: { paddingLeft: 20, paddingRight: 10, width: '100%' },
 })

@@ -37,7 +37,8 @@ export default function Post({ route, navigation }) {
             time: Date.parse(time),
             dateTime: convert(),
             user: emailAddress,
-            likes: []
+            likes: [],
+            comments: []
         })
             .then(function (docRef) {
                 Alert.alert("Thêm thành công")

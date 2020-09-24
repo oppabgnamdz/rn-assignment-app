@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, Keyboard, YellowBox } from 'react-native';
 import Login from './components/Login';
 import FirebaseConfig from './components/ConfigFirebase'
 import * as firebase from 'firebase'
@@ -14,7 +14,7 @@ import UserScreen from './components/UserScreen/UserScreen'
 FirebaseConfig
 const Stack = createStackNavigator();
 export default function App() {
-
+  YellowBox.ignoreWarnings(['Setting a timer']);
   return (
 
     <NavigationContainer>

@@ -22,7 +22,9 @@ export default function ListPost({ route, navigation }) {
                 <TouchableOpacity
 
                     onPress={() => {
-                        navigation.navigate('UserScreen')
+                        navigation.navigate('UserScreen', {
+                            emailAddress: emailAddress,
+                        })
                     }}
                 >
                     <Image
