@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity, FlatList, Alert, TextInput, Keyboard, KeyboardAvoidingView } from 'react-native'
+import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity, FlatList, Alert, TextInput, Keyboard, KeyboardAvoidingView, Share } from 'react-native'
 import * as firebase from 'firebase'
-import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { AntDesign, FontAwesome5, Ionicons, SimpleLineIcons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 
 const widthScreen = Dimensions.get('window').width;
-export default function Home({ route }) {
+export default function Home({ route, navigation }) {
     const userName = route.params.user
     const [isModalVisible, setModalVisible] = useState(false);
     const [contentPost, setContentPost] = useState('')
     const [userPost, setUserPost] = useState('')
     const [inputComment, setInputComment] = useState('')
     const [dataComments, setDataComments] = useState([])
-    console.log(isModalVisible);
     const toggleModal = (content, user, c) => {
         const sync = async () => {
             const db = firebase.firestore();
@@ -99,6 +98,27 @@ export default function Home({ route }) {
                             <Text style={{ marginLeft: 5, marginTop: 4 }} >Comment</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                            onPress={async () => {
+                                try {
+                                    const result = await Share.share({
+                                        message: content,
+                                    });
+                                    if (result.action === Share.sharedAction) {
+                                        if (result.activityType) {
+                                            // shared with activity type of result.activityType
+                                            console.log('a')
+                                        } else {
+                                            console.log('b')
+                                            // shared
+                                        }
+                                    } else if (result.action === Share.dismissedAction) {
+                                        console.log('c')
+                                        // dismissed
+                                    }
+                                } catch (error) {
+                                    alert(error.message);
+                                }
+                            }}
 
                             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                             <AntDesign name="sharealt" size={24} color='black' />
@@ -113,6 +133,7 @@ export default function Home({ route }) {
 
     const [data, setData] = useState([])
     useEffect(() => {
+
         const request = async () => {
             let fake = []
             const db = firebase.firestore();
@@ -139,22 +160,7 @@ export default function Home({ route }) {
     }, [isModalVisible])
     return (
         <View style={styles.container}>
-            <View style={styles.social}>
-                <TouchableOpacity style={styles.viewFollow}>
-                    <Image
-                        style={{ width: 30, height: 30, marginRight: 10 }}
-                        source={require('../images/follow.png')}
-                    />
-                    <Text style={{ fontSize: 20 }}>Follow</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.viewShare}>
-                    <Image
-                        style={{ width: 30, height: 30, marginRight: 10 }}
-                        source={require('../images/share.png')}
-                    />
-                    <Text style={{ fontSize: 20 }}>Share</Text>
-                </TouchableOpacity>
-            </View>
+
             <View style={styles.viewContent}>
                 <FlatList
                     data={data}
@@ -185,7 +191,7 @@ export default function Home({ route }) {
                         height: "80%"
                     }}
                 >
-                    <View style={{ backgroundColor: 'lightblue', flex: 0.93, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ backgroundColor: 'lightblue', marginTop: 20, flex: 0.93, justifyContent: 'center', alignItems: 'center' }}>
                         <FlatList
                             data={dataComments}
                             renderItem={renderComments}
@@ -302,7 +308,7 @@ const styles = StyleSheet.create({
     },
     viewFollow: { flex: 1, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', borderRightWidth: 1, },
     viewShare: { flex: 1, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
-    viewContent: { marginTop: 15, backgroundColor: 'white', width: widthScreen, alignItems: 'center', marginBottom: 40 },
+    viewContent: { marginTop: 0, backgroundColor: 'white', width: widthScreen, alignItems: 'center', marginBottom: 5 },
     item: {
         width: widthScreen * 0.95,
         marginTop: 10,

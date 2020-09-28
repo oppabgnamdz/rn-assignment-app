@@ -7,6 +7,7 @@ import Post from './Post'
 import UserScreen from './UserScreen/UserScreen'
 
 export default function Login({ navigation }) {
+    console.log('logintest')
     var provider = new firebase.auth.FacebookAuthProvider();
     provider.setCustomParameters({
         'display': 'popup'

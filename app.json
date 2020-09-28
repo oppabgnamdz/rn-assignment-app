@@ -24,7 +24,8 @@
     },
     "android": {
       "package": "com.yourcompany.yourappname",
-      "versionCode": 1
+      "versionCode": 1,
+      "useNextNotificationsApi": true 
     }
   }
 }

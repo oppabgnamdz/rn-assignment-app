@@ -44,9 +44,11 @@ export default function ListPost({ route, navigation }) {
                     fakeData.push({ id: doc.id, content: doc.data().content, time: doc.data().time, dateTime: doc.data().dateTime })
                 });
             });
-            await db.collection("followers").get().then((querySnapshot) => {
+            await db.collection("notifications").get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
-                    fakeDataFollowers.push({ id: doc.id, content: doc.data().content, time: doc.data().time, dateTime: doc.data().dateTime })
+                    doc.data().listDevice.map(a => {
+                        fakeDataFollowers.push(a)
+                    })
                 });
             });
             const sort = (data) => {
@@ -78,6 +80,14 @@ export default function ListPost({ route, navigation }) {
             <Item content={item.content} dateTime={item.dateTime} />
         ))
     };
+    const renderItemFollower = ({ item }) => {
+        return ((
+            <View style={styles.item}>
+                <Text>{item}</Text>
+            </View>
+        ))
+    };
+
     const Render = () => {
         if (state) {
             return (
@@ -91,7 +101,7 @@ export default function ListPost({ route, navigation }) {
             return (
                 <FlatList
                     data={dataFollowers}
-                    renderItem={renderItem}
+                    renderItem={renderItemFollower}
                     keyExtractor={item => item.id}
                 />
             )

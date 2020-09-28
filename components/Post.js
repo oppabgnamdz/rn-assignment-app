@@ -6,6 +6,26 @@ const screenWidth = Dimensions.get('window').width;
 export default function Post({ route, navigation }) {
     const [areaText, setAreaText] = useState('');
     const emailAddress = route.params.emailAddress;
+    async function sendPushNotification(expoPushToken) {
+        const message = {
+            to: expoPushToken,
+            sound: 'default',
+            title: 'Original Title',
+            body: areaText,
+            data: { data: 'goes here' },
+        };
+
+        await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Accept-encoding': 'gzip, deflate',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(message),
+        });
+    }
+
     useEffect(() => {
         navigation.setOptions({
             headerLeft: () => (
@@ -23,7 +43,9 @@ export default function Post({ route, navigation }) {
     const areaContent = (e) => {
         setAreaText(e)
     }
-    const confirm = () => {
+    async function confirm() {
+        const arr = []
+
         if (areaText.length == 0) return Alert.alert('Nội dung không để trống')
         const time = new Date();
         function convert() {
@@ -32,7 +54,7 @@ export default function Post({ route, navigation }) {
         }
         console.log(time.toString())
         const db = firebase.firestore()
-        db.collection("poster").add({
+        await db.collection("poster").add({
             content: areaText,
             time: Date.parse(time),
             dateTime: convert(),
@@ -46,6 +68,22 @@ export default function Post({ route, navigation }) {
             .catch(function (error) {
                 console.error("Error adding document: ", error);
             });
+        const pushData = async () => {
+            await db.collection("notifications").get().then(function (querySnapshot) {
+                querySnapshot.forEach(function (doc) {
+                    // doc.data() is never undefined for query doc snapshots
+                    console.log(doc.id, " => ", doc.data().listDevice);
+                    doc.data().listDevice.map((a) => {
+                        arr.push(a)
+                    })
+                });
+            });
+            console.log(arr)
+            arr.map((a) => {
+                sendPushNotification(a)
+            })
+        }
+        pushData();
     }
     return (
         <View style={Platform.OS == 'ios' ? { ...styles.container, marginTop: 50 } : styles.container}>
@@ -64,7 +102,11 @@ export default function Post({ route, navigation }) {
                 />
                 <TouchableOpacity
                     style={styles.confirm}
-                    onPress={confirm}
+                    onPress={
+
+                        async () => {
+                           confirm();
+                        }}
                 >
                     <Text style={{ textAlign: 'center' }}>
                         Xác nhận
@@ -89,3 +131,5 @@ const styles = StyleSheet.create({
     textInput: { height: 200, color: 'black', borderRadius: 10, paddingLeft: 10, width: screenWidth * 0.9, paddingRight: 10, backgroundColor: 'lightblue' },
     confirm: { alignSelf: 'flex-end', marginTop: 20, borderRadius: 20, fontSize: 20, width: 100, color: 'black', backgroundColor: '#80f28d', height: 40, padding: 6, justifyContent: 'center' },
 });
+
+
